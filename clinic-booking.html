@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>عيادة الأمل – حجز المواعيد</title>
+    <style>
+        /* === الأساسيات === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            color: #1e293b;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            padding: 30px;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #0f3b5c;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #475569;
+            font-size: 16px;
+            margin-bottom: 30px;
+            border-right: 4px solid #2a9d8f;
+            padding-right: 12px;
+        }
+
+        /* === نموذج الحجز === */
+        .booking-form {
+            background: #f9fcff;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 40px;
+        }
+
+        .booking-form h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #0f3b5c;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px 24px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #1e293b;
+        }
+
+        input, select {
+            padding: 12px 14px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 15px;
+            background: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2a9d8f;
+            box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.2);
+        }
+
+        input.error, select.error {
+            border-color: #e63946;
+        }
+
+        .error-msg {
+            color: #e63946;
+            font-size: 13px;
+            margin-top: 4px;
+            min-height: 20px;
+        }
+
+        .btn-primary {
+            background: #2a9d8f;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #21867a;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-pay {
+            background: #e9c46a;
+            color: #1e293b;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-pay:hover {
+            background: #d4a854;
+        }
+
+        .btn-pay.paid {
+            background: #a3d9a5;
+            cursor: default;
+        }
+
+        .btn-delete {
+            background: transparent;
+            color: #e63946;
+            border: 1.5px solid #e63946;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s, color 0.2s;
+            margin-right: 6px;
+        }
+
+        .btn-delete:hover {
+            background: #e63946;
+            color: white;
+        }
+
+        /* === جدول السجلات === */
+        .records-section h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #0f3b5c;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background: #1e293b;
+            color: white;
+            padding: 12px 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-paid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .no-records {
+            text-align: center;
+            padding: 30px;
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        /* === رسالة نجاح === */
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background: #2a9d8f;
+            color: white;
+            text-align: center;
+            border-radius: 12px;
+            padding: 14px 20px;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .toast.error {
+            background: #e63946;
+        }
+
+        /* === Responsive === */
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 16px;
+            }
+            th, td {
+                font-size: 13px;
+                padding: 8px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>عيادة الأمل الطبية</h1>
+        <div class="subtitle">حجز مواعيد – دفع آمن – سجلات دقيقة</div>
+
+        <!-- نموذج الحجز -->
+        <div class="booking-form">
+            <h2>📋 حجز موعد جديد</h2>
+            <form id="appointmentForm">
+                <div class="form-grid">
+                    <div class="field-group">
+                        <label for="patientName">اسم المريض</label>
+                        <input type="text" id="patientName" placeholder="أدخل الاسم الكامل" required />
+                        <span class="error-msg" id="nameError"></span>
+                    </div>
+                    <div class="field-group">
+                        <label for="cardNumber">رقم البطاقة العلاجية</label>
+                        <input type="text" id="cardNumber" placeholder="مثال: 1234-5678-90" required />
+                        <span class="error-msg" id="cardError"></span>
+                    </div>
+                    <div class="field-group">
+                        <label for="doctorType">نوع الطبيب</label>
+                        <select id="doctorType" required>
+                            <option value="">اختر التخصص</option>
+                            <option value="طب عام">طب عام</option>
+                            <option value="أطفال">أطفال</option>
+                            <option value="قلب">قلب</option>
+                            <option value="عظام">عظام</option>
+                            <option value="جلدية">جلدية</option>
+                            <option value="أنف وأذن وحنجرة">أنف وأذن وحنجرة</option>
+                            <option value="باطنية">باطنية</option>
+                            <option value="نسائية وتوليد">نسائية وتوليد</option>
+                        </select>
+                        <span class="error-msg" id="doctorError"></span>
+                    </div>
+                    <div class="field-group">
+                        <label for="appointmentDate">تاريخ الموعد</label>
+                        <input type="date" id="appointmentDate" required />
+                        <span class="error-msg" id="dateError"></span>
+                    </div>
+                    <div class="field-group">
+                        <label for="appointmentTime">وقت الموعد</label>
+                        <input type="time" id="appointmentTime" required />
+                        <span class="error-msg" id="timeError"></span>
+                    </div>
+                    <div class="field-group full-width">
+                        <button type="submit" class="btn-primary">تأكيد الحجز</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- سجل المواعيد -->
+        <div class="records-section">
+            <h2>🗂️ سجل المواعيد</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اسم المريض</th>
+                            <th>رقم البطاقة</th>
+                            <th>التخصص</th>
+                            <th>التاريخ</th>
+                            <th>الوقت</th>
+                            <th>حالة الدفع</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsBody">
+                        <!-- يتم تعبئة الصفوف هنا عبر JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="no-records" id="noRecordsMsg">لا توجد مواعيد محجوزة حتى الآن</div>
+        </div>
+    </div>
+
+    <!-- رسالة منبثقة -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const form = document.getElementById('appointmentForm');
+        const recordsBody = document.getElementById('recordsBody');
+        const noRecordsMsg = document.getElementById('noRecordsMsg');
+        const toast = document.getElementById('toast');
+
+        let appointments = [];
+
+        // تحميل السجلات المحفوظة سابقاً (إن وجدت)
+        try {
+            const saved = localStorage.getItem('clinicAppointments');
+            if (saved) {
+                appointments = JSON.parse(saved);
+            }
+        } catch (e) {
+            appointments = [];
+        }
+
+        function saveAppointments() {
+            try {
+                localStorage.setItem('clinicAppointments', JSON.stringify(appointments));
+            } catch (e) {
+                // التخزين غير متاح، يتم تجاهله بصمت
+            }
+        }
+
+        function showToast(message, isError) {
+            toast.textContent = message;
+            toast.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => {
+                toast.className = 'toast';
+            }, 2800);
+        }
+
+        function clearErrors() {
+            document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
+            document.querySelectorAll('input, select').forEach(el => el.classList.remove('error'));
+        }
+
+        function setFieldError(inputId, errorId, message) {
+            document.getElementById(inputId).classList.add('error');
+            document.getElementById(errorId).textContent = message;
+        }
+
+        function formatDate(dateStr) {
+            const parts = dateStr.split('-');
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        function renderTable() {
+            recordsBody.innerHTML = '';
+
+            if (appointments.length === 0) {
+                noRecordsMsg.style.display = 'block';
+                return;
+            }
+
+            noRecordsMsg.style.display = 'none';
+
+            appointments.forEach((appt, index) => {
+                const tr = document.createElement('tr');
+
+                const statusBadge = appt.paid
+                    ? '<span class="status-badge status-paid">مدفوع</span>'
+                    : '<span class="status-badge status-pending">قيد الانتظار</span>';
+
+                const payButton = appt.paid
+                    ? '<button class="btn-pay paid" disabled>تم الدفع ✓</button>'
+                    : `<button class="btn-pay" data-index="${index}" data-action="pay">دفع الآن</button>`;
+
+                tr.innerHTML = `
+                    <td>${appt.name}</td>
+                    <td>${appt.card}</td>
+                    <td>${appt.doctorType}</td>
+                    <td>${formatDate(appt.date)}</td>
+                    <td>${appt.time}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        ${payButton}
+                        <button class="btn-delete" data-index="${index}" data-action="delete">حذف</button>
+                    </td>
+                `;
+
+                recordsBody.appendChild(tr);
+            });
+        }
+
+        recordsBody.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target.tagName !== 'BUTTON') return;
+
+            const index = parseInt(target.getAttribute('data-index'), 10);
+            const action = target.getAttribute('data-action');
+
+            if (action === 'pay') {
+                appointments[index].paid = true;
+                saveAppointments();
+                renderTable();
+                showToast('تم تسجيل الدفع بنجاح ✅');
+            } else if (action === 'delete') {
+                appointments.splice(index, 1);
+                saveAppointments();
+                renderTable();
+                showToast('تم حذف الموعد');
+            }
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            clearErrors();
+
+            const name = document.getElementById('patientName').value.trim();
+            const card = document.getElementById('cardNumber').value.trim();
+            const doctorType = document.getElementById('doctorType').value;
+            const date = document.getElementById('appointmentDate').value;
+            const time = document.getElementById('appointmentTime').value;
+
+            let isValid = true;
+
+            if (name.length < 3) {
+                setFieldError('patientName', 'nameError', 'يرجى إدخال اسم صحيح (3 أحرف على الأقل)');
+                isValid = false;
+            }
+
+            const cardPattern = /^[0-9]{4}-[0-9]{4}-[0-9]{2}$/;
+            if (!cardPattern.test(card)) {
+                setFieldError('cardNumber', 'cardError', 'صيغة رقم البطاقة يجب أن تكون مثل: 1234-5678-90');
+                isValid = false;
+            }
+
+            if (!doctorType) {
+                setFieldError('doctorType', 'doctorError', 'يرجى اختيار التخصص');
+                isValid = false;
+            }
+
+            if (!date) {
+                setFieldError('appointmentDate', 'dateError', 'يرجى اختيار تاريخ الموعد');
+                isValid = false;
+            } else {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const selectedDate = new Date(date);
+                if (selectedDate < today) {
+                    setFieldError('appointmentDate', 'dateError', 'لا يمكن اختيار تاريخ في الماضي');
+                    isValid = false;
+                }
+            }
+
+            if (!time) {
+                setFieldError('appointmentTime', 'timeError', 'يرجى اختيار وقت الموعد');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                showToast('يرجى تصحيح الأخطاء في النموذج', true);
+                return;
+            }
+
+            appointments.push({
+                name,
+                card,
+                doctorType,
+                date,
+                time,
+                paid: false
+            });
+
+            saveAppointments();
+            renderTable();
+            form.reset();
+            showToast('تم تأكيد الحجز بنجاح ✅');
+        });
+
+        renderTable();
+    </script>
+</body>
+</html>
